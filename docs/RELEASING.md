@@ -7,14 +7,14 @@ binary that may be incompatible with the user's Nuke installation.
 ## Local build
 
 ```bash
-cmake -S . -B build/nuke \
+cmake -S . -B build \
     -DCMAKE_BUILD_TYPE=Release \
     -DNTD_BUILD_EXAMPLES=OFF \
     -DNTD_BUILD_NUKE_PLUGIN=ON \
     -DNTD_BUILD_TESTS=OFF \
     -DNUKE_SDK_ROOT=/path/to/nuke
-cmake --build build/nuke --config Release --parallel
-cmake --install build/nuke --config Release --prefix dist
+cmake --build build --config Release --parallel
+cmake --install build --config Release --prefix dist
 ```
 
 The install step creates a `GinzburgTemporalDenoiser` directory that can be

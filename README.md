@@ -74,10 +74,10 @@ The Nuke SDK is not included. Set `NUKE_SDK_ROOT` to the Nuke application
 directory containing `cmake/NukeConfig.cmake` and `include/DDImage`:
 
 ```bash
-cmake -S . -B build/nuke \
+cmake -S . -B build \
     -DNTD_BUILD_NUKE_PLUGIN=ON \
     -DNUKE_SDK_ROOT=/path/to/nuke
-cmake --build build/nuke --target GinzburgTemporalDenoiser --parallel
+cmake --build build --target GinzburgTemporalDenoiser --parallel
 ```
 
 Copy the resulting module to a directory on Nuke's plug-in path. The host and

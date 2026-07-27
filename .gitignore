@@ -2,8 +2,7 @@
 .idea/
 .vscode/
 
-/build*/
-cmake-build-*/
+/build/
 CMakeFiles/
 CMakeCache.txt
 CTestTestfile.cmake

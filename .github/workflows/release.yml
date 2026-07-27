@@ -17,15 +17,15 @@ jobs:
             -
                 name: Configure
                 run: >
-                    cmake -S . -B build/core
+                    cmake -S . -B build
                     -DNTD_BUILD_NUKE_PLUGIN=OFF
                     -DNTD_WARNINGS_AS_ERRORS=ON
             -
                 name: Build
-                run: cmake --build build/core --parallel
+                run: cmake --build build --parallel
             -
                 name: Test
-                run: ctest --test-dir build/core --output-on-failure
+                run: ctest --test-dir build --output-on-failure
 
     release:
         needs: core
