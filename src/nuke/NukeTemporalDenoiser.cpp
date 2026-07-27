@@ -312,9 +312,13 @@ ntd::Vec2f GinzburgTemporalDenoiser::readMotion(
     const int safeX = tile.clampx(x);
     const int safeY = tile.clampy(y);
     const float limit = params.maximumMotionPerFrame;
+    const auto safeComponent = [scale = params.motionScale, limit](float value) noexcept {
+        const float scaled = value * scale;
+        return std::isfinite(scaled) ? std::clamp(scaled, -limit, limit) : 0.0F;
+    };
     return {
-        std::clamp(tile[motion_[0]][safeY][safeX] * params.motionScale, -limit, limit),
-        std::clamp(tile[motion_[1]][safeY][safeX] * params.motionScale, -limit, limit),
+        safeComponent(tile[motion_[0]][safeY][safeX]),
+        safeComponent(tile[motion_[1]][safeY][safeX]),
     };
 }
 
