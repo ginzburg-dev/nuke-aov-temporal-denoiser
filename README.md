@@ -89,12 +89,12 @@ The temporal input setup uses the NDK
 
 ## Releases
 
-Tags matching `v*` trigger the release workflow. It tests the core on a
-GitHub-hosted runner, then uses a self-hosted Apple silicon runner with a
-licensed Nuke installation to build and load-test the plug-in. A successful run
-publishes a versioned ZIP and SHA-256 checksum to GitHub Releases.
+Tags matching `v*` test the core and publish a source release. GitHub attaches
+the standard source archives automatically. Prebuilt Nuke modules are not
+included because they must match the target Nuke version, compiler, standard
+library, and architecture.
 
-Runner configuration and the local packaging commands are documented in
+Local plug-in build and packaging commands are documented in
 [docs/RELEASING.md](docs/RELEASING.md).
 
 ## Channels
@@ -124,7 +124,7 @@ docs/ALGORITHM.md         Filter equations and implementation notes
 ```
 
 The public CI builds and tests the core with GCC and Clang. Tagged releases
-build and load-test the Nuke module on the configured self-hosted runner.
+publish the tested source revision.
 
 ## License
 
