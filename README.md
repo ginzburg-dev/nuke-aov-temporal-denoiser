@@ -70,8 +70,8 @@ discontinuity. With the default test settings, the filter reduces RMSE from
 
 ## Nuke build
 
-The Nuke SDK is not included. Set `NUKE_SDK_ROOT` to an installation containing
-`include/DDImage` and the `DDImage` library:
+The Nuke SDK is not included. Set `NUKE_SDK_ROOT` to the Nuke application
+directory containing `cmake/NukeConfig.cmake` and `include/DDImage`:
 
 ```bash
 cmake -S . -B build/nuke \
@@ -86,6 +86,16 @@ versions.
 
 The temporal input setup uses the NDK
 [`split_input` / `inputContext` API](https://learn.foundry.com/nuke/developers/latest/ndkreference/Plugins/classDD_1_1Image_1_1Op.html).
+
+## Releases
+
+Tags matching `v*` trigger the release workflow. It tests the core on a
+GitHub-hosted runner, then uses a self-hosted Apple silicon runner with a
+licensed Nuke installation to build and load-test the plug-in. A successful run
+publishes a versioned ZIP and SHA-256 checksum to GitHub Releases.
+
+Runner configuration and the local packaging commands are documented in
+[docs/RELEASING.md](docs/RELEASING.md).
 
 ## Channels
 
@@ -113,8 +123,8 @@ examples/SyntheticDemo.cpp
 docs/ALGORITHM.md         Filter equations and implementation notes
 ```
 
-The public CI builds and tests the core with GCC and Clang. Building the Nuke
-module requires a local SDK.
+The public CI builds and tests the core with GCC and Clang. Tagged releases
+build and load-test the Nuke module on the configured self-hosted runner.
 
 ## License
 

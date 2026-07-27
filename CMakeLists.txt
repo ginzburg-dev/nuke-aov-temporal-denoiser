@@ -2,6 +2,7 @@ cmake_minimum_required(VERSION 3.20)
 
 project(
     NukeAovTemporalDenoiser
+    VERSION 0.1.0
     DESCRIPTION "AOV-guided spatiotemporal denoising research for Foundry Nuke"
     LANGUAGES CXX
 )
@@ -81,34 +82,33 @@ if(NTD_BUILD_NUKE_PLUGIN)
     if(NOT DEFINED NUKE_SDK_ROOT)
         message(
             FATAL_ERROR
-            "Set NUKE_SDK_ROOT to a Nuke installation containing include/ and lib/"
+            "Set NUKE_SDK_ROOT to the Nuke directory containing cmake/ and include/"
         )
     endif()
 
-    find_path(
-        NUKE_INCLUDE_DIR
-        DDImage/Iop.h
-        HINTS "${NUKE_SDK_ROOT}/include"
-        REQUIRED
+    set(
+        Nuke_DIR
+        "${NUKE_SDK_ROOT}/cmake"
+        CACHE PATH
+        "Directory containing NukeConfig.cmake"
     )
-    find_library(
-        NUKE_DDIMAGE_LIBRARY
-        DDImage
-        HINTS "${NUKE_SDK_ROOT}" "${NUKE_SDK_ROOT}/lib"
-        REQUIRED
-    )
-
-    add_library(GinzburgTemporalDenoiser MODULE src/nuke/NukeTemporalDenoiser.cpp)
-    target_compile_features(GinzburgTemporalDenoiser PRIVATE cxx_std_17)
-    target_include_directories(
-        GinzburgTemporalDenoiser PRIVATE "${NUKE_INCLUDE_DIR}"
-    )
-    target_link_libraries(
-        GinzburgTemporalDenoiser PRIVATE ntd::core "${NUKE_DDIMAGE_LIBRARY}"
-    )
-    ntd_enable_warnings(GinzburgTemporalDenoiser)
-    set_target_properties(GinzburgTemporalDenoiser PROPERTIES PREFIX "")
-    if(APPLE)
-        set_target_properties(GinzburgTemporalDenoiser PROPERTIES SUFFIX ".dylib")
+    find_package(Nuke CONFIG REQUIRED)
+    if(NOT COMMAND add_nuke_plugin)
+        message(FATAL_ERROR "The installed Nuke package does not provide add_nuke_plugin")
     endif()
+
+    add_nuke_plugin(GinzburgTemporalDenoiser src/nuke/NukeTemporalDenoiser.cpp)
+    target_compile_features(GinzburgTemporalDenoiser PRIVATE cxx_std_17)
+    target_link_libraries(GinzburgTemporalDenoiser PRIVATE ntd::core)
+    ntd_enable_warnings(GinzburgTemporalDenoiser)
+
+    install(
+        TARGETS GinzburgTemporalDenoiser
+        LIBRARY DESTINATION GinzburgTemporalDenoiser
+        RUNTIME DESTINATION GinzburgTemporalDenoiser
+    )
+    install(
+        FILES README.md LICENSE
+        DESTINATION GinzburgTemporalDenoiser
+    )
 endif()

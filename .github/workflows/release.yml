@@ -1,0 +1,147 @@
+name: Release
+
+on:
+    push:
+        tags:
+            - "v*"
+
+permissions:
+    contents: read
+
+jobs:
+    core:
+        runs-on: ubuntu-latest
+        steps:
+            -
+                uses: actions/checkout@v4
+            -
+                name: Configure
+                run: >
+                    cmake -S . -B build/core
+                    -DNTD_BUILD_NUKE_PLUGIN=OFF
+                    -DNTD_WARNINGS_AS_ERRORS=ON
+            -
+                name: Build
+                run: cmake --build build/core --parallel
+            -
+                name: Test
+                run: ctest --test-dir build/core --output-on-failure
+
+    plugin:
+        needs: core
+        runs-on:
+            - self-hosted
+            - macOS
+            - ARM64
+            - nuke-sdk
+        env:
+            NUKE_EXECUTABLE: ${{ vars.NUKE_EXECUTABLE }}
+            NUKE_SDK_ROOT: ${{ vars.NUKE_SDK_ROOT }}
+            NUKE_VERSION: ${{ vars.NUKE_VERSION }}
+        steps:
+            -
+                uses: actions/checkout@v4
+            -
+                name: Verify Nuke SDK
+                shell: bash
+                run: |
+                    if [[ -z "${NUKE_SDK_ROOT}" ]]; then
+                        echo "Set the NUKE_SDK_ROOT repository variable."
+                        exit 1
+                    fi
+                    if [[ -z "${NUKE_EXECUTABLE}" ]]; then
+                        echo "Set the NUKE_EXECUTABLE repository variable."
+                        exit 1
+                    fi
+                    if [[ -z "${NUKE_VERSION}" ]]; then
+                        echo "Set the NUKE_VERSION repository variable."
+                        exit 1
+                    fi
+                    test -x "${NUKE_EXECUTABLE}"
+                    test -f "${NUKE_SDK_ROOT}/cmake/NukeConfig.cmake"
+                    test -f "${NUKE_SDK_ROOT}/include/DDImage/Iop.h"
+            -
+                name: Configure
+                shell: bash
+                run: |
+                    cmake -S . -B build/plugin \
+                        -DCMAKE_BUILD_TYPE=Release \
+                        -DNTD_BUILD_EXAMPLES=OFF \
+                        -DNTD_BUILD_NUKE_PLUGIN=ON \
+                        -DNTD_BUILD_TESTS=OFF \
+                        -DNTD_WARNINGS_AS_ERRORS=ON \
+                        -DNUKE_SDK_ROOT="${NUKE_SDK_ROOT}"
+            -
+                name: Build
+                run: cmake --build build/plugin --config Release --parallel
+            -
+                name: Install
+                run: >
+                    cmake --install build/plugin
+                    --config Release
+                    --prefix stage
+            -
+                name: Smoke test in Nuke
+                shell: bash
+                run: |
+                    export NUKE_PATH="${GITHUB_WORKSPACE}/stage/GinzburgTemporalDenoiser"
+                    "${NUKE_EXECUTABLE}" -t tests/NukeSmokeTest.py
+            -
+                name: Write build information
+                shell: bash
+                run: |
+                    {
+                        echo "Version: ${GITHUB_REF_NAME#v}"
+                        echo "Nuke: ${NUKE_VERSION}"
+                        echo "Platform: macOS arm64"
+                        echo "Commit: ${GITHUB_SHA}"
+                    } > stage/GinzburgTemporalDenoiser/BUILD_INFO.txt
+            -
+                name: Package
+                shell: bash
+                working-directory: stage
+                run: |
+                    version="${GITHUB_REF_NAME#v}"
+                    archive="GinzburgTemporalDenoiser-${version}-Nuke${NUKE_VERSION}-macOS-arm64.zip"
+                    cmake -E make_directory ../dist
+                    cmake -E tar cf "../dist/${archive}" --format=zip GinzburgTemporalDenoiser
+                    shasum -a 256 "../dist/${archive}" > "../dist/${archive}.sha256"
+            -
+                name: Upload release assets
+                uses: actions/upload-artifact@v4
+                with:
+                    name: release-assets
+                    path: dist/*
+                    if-no-files-found: error
+                    retention-days: 7
+
+    release:
+        needs:
+            - core
+            - plugin
+        permissions:
+            contents: write
+        runs-on: ubuntu-latest
+        steps:
+            -
+                uses: actions/checkout@v4
+            -
+                name: Download release assets
+                uses: actions/download-artifact@v4
+                with:
+                    name: release-assets
+                    path: dist
+            -
+                name: Publish GitHub Release
+                env:
+                    GH_TOKEN: ${{ github.token }}
+                shell: bash
+                run: |
+                    if gh release view "${GITHUB_REF_NAME}" >/dev/null 2>&1; then
+                        gh release upload "${GITHUB_REF_NAME}" dist/* --clobber
+                    else
+                        gh release create "${GITHUB_REF_NAME}" dist/* \
+                            --generate-notes \
+                            --title "Ginzburg Temporal Denoiser ${GITHUB_REF_NAME}" \
+                            --verify-tag
+                    fi
