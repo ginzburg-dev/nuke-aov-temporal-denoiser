@@ -1,0 +1,41 @@
+name: CI
+
+on:
+    push:
+    pull_request:
+
+permissions:
+    contents: read
+
+jobs:
+    core:
+        strategy:
+            matrix:
+                include:
+                    -
+                        compiler: GCC
+                        cc: gcc
+                        cxx: g++
+                    -
+                        compiler: Clang
+                        cc: clang
+                        cxx: clang++
+        runs-on: ubuntu-latest
+        env:
+            CC: ${{ matrix.cc }}
+            CXX: ${{ matrix.cxx }}
+        steps:
+            -
+                uses: actions/checkout@v4
+            -
+                name: Configure
+                run: >
+                    cmake -S . -B build
+                    -DNTD_BUILD_NUKE_PLUGIN=OFF
+                    -DNTD_WARNINGS_AS_ERRORS=ON
+            -
+                name: Build
+                run: cmake --build build --parallel
+            -
+                name: Test
+                run: ctest --test-dir build --output-on-failure
