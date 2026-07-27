@@ -33,6 +33,16 @@ requests, and scanline output.
 
 The exact weight equations are in [docs/ALGORITHM.md](docs/ALGORITHM.md).
 
+## Nuke integration
+
+![Ginzburg Denoiser node running in Foundry Nuke](docs/images/nuke-node-ui.jpg)
+
+The screenshot shows the original production
+[Ginzburg Denoiser](https://github.com/ginzburg-dev/ginzburg-denoiser) node in
+Foundry Nuke. This repository revisits the same AOV-guided spatial and temporal
+workflow as a smaller C++17 research prototype; the UI above belongs to the
+earlier production implementation.
+
 ## Core build
 
 Requires CMake 3.20 and a C++17 compiler.
@@ -108,5 +118,7 @@ module requires a local SDK.
 
 ## License
 
-The source code is Apache-2.0. The Sprite Fright comparison image is credited
-above and remains available under CC BY.
+The source code is Apache-2.0. Visual assets are not covered by the code
+license: the Sprite Fright comparison is credited above and remains available
+under CC BY; the Nuke screenshot is reproduced from the earlier Ginzburg
+Denoiser project for historical context.
