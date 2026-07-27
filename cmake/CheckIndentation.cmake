@@ -27,7 +27,10 @@ foreach(path IN LISTS checked_files)
 
     foreach(line IN LISTS lines)
         math(EXPR line_number "${line_number} + 1")
-        string(REGEX MATCH "^[ \t]*" indentation "${line}")
+        set(indentation "")
+        if(line MATCHES "^([ \t]+)")
+            set(indentation "${CMAKE_MATCH_1}")
+        endif()
         string(FIND "${indentation}" "${tab_character}" tab_position)
 
         if(NOT tab_position EQUAL -1)
