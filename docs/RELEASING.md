@@ -30,18 +30,22 @@ NUKE_PATH=/path/to/dist/GinzburgTemporalDenoiser \
 
 ## Source release
 
-Push an annotated semantic-version tag:
+Update the project version in `CMakeLists.txt`:
 
-```bash
-git tag -a v0.1.0 -m "Release v0.1.0"
-git push origin v0.1.0
+```cmake
+project(
+    NukeAovTemporalDenoiser
+    VERSION 2.0.1
+)
 ```
 
-The release workflow:
+Open a pull request with the version change and merge it into `main`. The
+release workflow then:
 
 1. Builds and tests the dependency-free core on a GitHub-hosted runner.
-2. Creates the matching GitHub Release with generated release notes.
-3. Publishes GitHub's standard ZIP and tarball snapshots of the tagged source.
+2. Creates an annotated tag matching the project version.
+3. Creates the GitHub Release with generated release notes.
+4. Publishes GitHub's standard ZIP and tarball snapshots of the tagged source.
 
 No self-hosted runner or Nuke installation is required for a source release.
 The release does not claim to contain a prebuilt or load-tested Nuke module.
