@@ -89,10 +89,11 @@ The temporal input setup uses the NDK
 
 ## Releases
 
-Tags matching `v*` test the core and publish a source release. GitHub attaches
-the standard source archives automatically. Prebuilt Nuke modules are not
-included because they must match the target Nuke version, compiler, standard
-library, and architecture.
+Changing the project version in `CMakeLists.txt` and merging it into `main`
+tests the core, creates the matching `v*` tag, and publishes a source release.
+GitHub attaches the standard source archives automatically. Prebuilt Nuke
+modules are not included because they must match the target Nuke version,
+compiler, standard library, and architecture.
 
 Local plug-in build and packaging commands are documented in
 [docs/RELEASING.md](docs/RELEASING.md).
