@@ -36,13 +36,7 @@ The exact weight equations are in [docs/ALGORITHM.md](docs/ALGORITHM.md).
 
 ## Nuke integration
 
-![Ginzburg Denoiser node running in Foundry Nuke](docs/images/nuke-node-ui.jpg)
-
-The screenshot shows the original production
-[Ginzburg Denoiser](https://github.com/ginzburg-dev/ginzburg-denoiser) node in
-Foundry Nuke. This repository revisits the same AOV-guided spatial and temporal
-workflow as a smaller C++17 research prototype; the UI above belongs to the
-earlier production implementation.
+![Temporal denoiser node in Foundry Nuke](docs/images/nuke-node-ui.jpg)
 
 ## Core build
 
