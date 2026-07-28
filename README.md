@@ -4,9 +4,9 @@
 [![Release](https://img.shields.io/github/v/release/ginzburg-dev/nuke-aov-temporal-denoiser)](https://github.com/ginzburg-dev/nuke-aov-temporal-denoiser/releases/latest)
 [![License](https://img.shields.io/badge/license-Apache--2.0-blue.svg)](LICENSE)
 
-Experimental C++ denoiser for Monte Carlo renders. The filter combines
-motion-compensated samples from adjacent frames with a spatial cross-bilateral
-filter guided by renderer AOVs.
+C++17 Nuke plug-in for spatial and temporal denoising of Monte Carlo renders.
+It combines motion-compensated samples from neighboring frames and uses
+renderer AOVs to preserve edges and reject invalid matches.
 
 ![Noisy input and denoised output](docs/images/sprite-fright-comparison.jpg)
 
@@ -14,31 +14,41 @@ Left: noisy input. Right: denoised output. Scene:
 [Blender 3.0 – Sprite Fright](https://cloud.blender.org/p/gallery/617933e9b7b35ce1e1c01066)
 by [Blender Studio](https://studio.blender.org/), CC BY.
 
-## Filter
+## How it works
 
-The Nuke node reads the current frame and up to three frames on either side.
-For each output pixel it:
+For each output pixel, the filter:
 
-1. Traces the selected motion channels to a neighboring frame.
-2. Searches around the predicted position.
-3. Rejects candidates that disagree in beauty, albedo, or world position.
-4. Weights the remaining temporal sample by guide distance, search distance,
-    and frame age.
-5. Applies a spatial filter using beauty, albedo, normal, depth, position, and
-    pixel distance.
-6. Uses the resulting weights for beauty and four optional RGB passes.
+1. Predicts its position in neighboring frames from the motion AOV.
+2. Searches around the prediction for the best match.
+3. Rejects matches that disagree in beauty, albedo, or world position.
+4. Combines accepted temporal samples with a cross-bilateral spatial filter.
+5. Reuses the same weights for beauty and up to four additional RGB passes.
 
-The guide math and matching code have no Nuke dependency. The adapter in
-[`src/nuke`](src/nuke) handles temporal contexts, channel selection, tile
-requests, and scanline output.
+The temporal window covers up to three frames on each side of the current
+frame. The filtering core has no Nuke dependency.
 
-The exact weight equations are in [docs/ALGORITHM.md](docs/ALGORITHM.md).
+## Inputs
 
-## Nuke integration
+| Input | Components | Purpose |
+|---|---:|---|
+| Beauty | RGB | Filtered image and color guide |
+| Motion | XY | Forward motion in pixels |
+| Albedo | RGB | Material boundaries and temporal rejection |
+| Normal | RGB | Surface orientation |
+| Position | RGB | Correspondence and disocclusion rejection |
+| Depth | 1 | Depth boundaries |
+| Extra 0–3 | RGB | Additional passes filtered with the beauty weights |
+
+`motion scale` converts the selected motion channels to pixel displacement.
+`maximum motion / frame` sets the motion clamp and input tile padding.
+
+## Nuke node
 
 ![Temporal denoiser node in Foundry Nuke](docs/images/nuke-node-ui.jpg)
 
-## Core build
+## Build
+
+### Core
 
 Requires CMake 3.20 and a C++17 compiler.
 
@@ -48,81 +58,45 @@ cmake --build build --parallel
 ctest --test-dir build --output-on-failure
 ```
 
-To rebuild the regression image:
+### Nuke plug-in
 
-```bash
-./build/ntd_synthetic_demo docs/synthetic-demo.svg
-```
-
-The tests cover parameter bounds, spatial weights, temporal rejection,
-correspondence search, AOV normalization, and the synthetic RMSE check.
-
-![Synthetic edge regression](docs/synthetic-demo.svg)
-
-The regression scene contains a moving surface with a hard depth and normal
-discontinuity. With the default test settings, the filter reduces RMSE from
-`0.1176` to `0.0490`.
-
-## Nuke build
-
-The Nuke SDK is not included. Set `NUKE_SDK_ROOT` to the Nuke application
-directory containing `cmake/NukeConfig.cmake` and `include/DDImage`:
+Set `NUKE_SDK_ROOT` to the Nuke directory that contains
+`cmake/NukeConfig.cmake` and `include/DDImage`:
 
 ```bash
 cmake -S . -B build \
     -DNTD_BUILD_NUKE_PLUGIN=ON \
     -DNUKE_SDK_ROOT=/path/to/nuke
 cmake --build build --target GinzburgTemporalDenoiser --parallel
+cmake --install build --prefix dist
 ```
 
-Copy the resulting module to a directory on Nuke's plug-in path. The host and
-plug-in must use compatible compiler, standard library, architecture, and Nuke
-versions.
+Add `dist/GinzburgTemporalDenoiser` to `NUKE_PATH`. The plug-in must be built
+for the same Nuke version, platform, and architecture as the host.
 
-The temporal input setup uses the NDK
-[`split_input` / `inputContext` API](https://learn.foundry.com/nuke/developers/latest/ndkreference/Plugins/classDD_1_1Image_1_1Op.html).
+## Validation
+
+The test suite covers parameter bounds, spatial weights, temporal rejection,
+correspondence search, AOV normalization, and synthetic image regression.
+
+![Synthetic edge regression](docs/synthetic-demo.svg)
+
+On the synthetic moving-edge scene, the default settings reduce RMSE from
+`0.1176` to `0.0490`.
+
+Implementation details and filter equations are in
+[docs/ALGORITHM.md](docs/ALGORITHM.md).
 
 ## Releases
 
-Changing the project version in `CMakeLists.txt` and merging it into `main`
-tests the core, creates the matching `v*` tag, and publishes a source release.
-GitHub attaches the standard source archives automatically. Prebuilt Nuke
-modules are not included because they must match the target Nuke version,
-compiler, standard library, and architecture.
+Bumping `VERSION` in `CMakeLists.txt` and merging it into `main` runs the tests,
+creates the matching `v*` tag, and publishes a source release. Prebuilt Nuke
+modules are not included.
 
-Local plug-in build and packaging commands are documented in
-[docs/RELEASING.md](docs/RELEASING.md).
-
-## Channels
-
-| Knob | Components | Use |
-|---|---:|---|
-| Beauty | RGB | Filtered signal and color guide |
-| Motion | XY | Forward motion in pixels |
-| Albedo | RGB | Material boundary guide |
-| Normal | RGB | Surface orientation guide |
-| Position | RGB | Correspondence and disocclusion rejection |
-| Depth | 1 | Depth boundary guide |
-| Extra 0–3 | RGB | Optional passes filtered with the beauty weights |
-
-`motion scale` converts the incoming vector convention to pixel displacement.
-`maximum motion / frame` controls both motion clamping and tile padding.
-
-## Layout
-
-```text
-include/ntd/              Filter math and data types
-src/                      Core implementation
-src/nuke/                 Nuke Iop adapter
-tests/                    Core tests
-examples/SyntheticDemo.cpp
-docs/ALGORITHM.md         Filter equations and implementation notes
-```
-
-The public CI builds and tests the core with GCC and Clang. Tagged releases
-publish the tested source revision.
+See [docs/RELEASING.md](docs/RELEASING.md) for the release and local packaging
+steps.
 
 ## License
 
-The source code is Apache-2.0. The Sprite Fright comparison is credited above
-and remains available under CC BY.
+The source code is licensed under Apache-2.0. The Sprite Fright image is
+available under CC BY.
