@@ -93,8 +93,8 @@ Bumping `VERSION` in `CMakeLists.txt` and merging it into `main` runs the tests,
 creates the matching `v*` tag, and publishes a source release. Prebuilt Nuke
 modules are not included.
 
-See [docs/RELEASING.md](docs/RELEASING.md) for the release and local packaging
-steps.
+See [CHANGELOG.md](CHANGELOG.md) for release notes and
+[docs/RELEASING.md](docs/RELEASING.md) for local packaging steps.
 
 ## License
 

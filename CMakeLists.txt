@@ -2,7 +2,7 @@ cmake_minimum_required(VERSION 3.20)
 
 project(
     NukeAovTemporalDenoiser
-    VERSION 2.0.1
+    VERSION 2.0.2
     DESCRIPTION "AOV-guided spatiotemporal denoising research for Foundry Nuke"
     LANGUAGES CXX
 )
