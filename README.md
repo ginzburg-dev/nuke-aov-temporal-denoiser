@@ -18,14 +18,14 @@ by [Blender Studio](https://studio.blender.org/), CC BY.
 
 For each output pixel, the filter:
 
-1. Predicts its position in neighboring frames from the motion AOV.
-2. Searches around the prediction for the best match.
+1. Reprojects neighboring frames with motion vectors.
+2. Finds corresponding pixels with an optimized local search.
 3. Rejects matches that disagree in beauty, albedo, or world position.
 4. Combines accepted temporal samples with a cross-bilateral spatial filter.
 5. Reuses the same weights for beauty and up to four additional RGB passes.
 
-The temporal window covers up to three frames on each side of the current
-frame. The filtering core has no Nuke dependency.
+The filter can use up to three frames on either side of the current frame. The
+filtering core has no Nuke dependency.
 
 ## Inputs
 

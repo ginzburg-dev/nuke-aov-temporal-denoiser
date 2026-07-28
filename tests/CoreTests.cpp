@@ -87,6 +87,21 @@ void matcherSelectsTheBestValidCandidate() {
     check(result.index == 2, "matcher must select the lowest-cost candidate");
 }
 
+void temporalSearchUsesAnExactLowerBound() {
+    ntd::DenoiseParameters parameters;
+    parameters.spatialSigma = 2.0F;
+
+    check(ntd::canStopTemporalSearch(0.25F, 1, parameters),
+        "an equal lower bound cannot improve the current match");
+    check(!ntd::canStopTemporalSearch(0.26F, 1, parameters),
+        "search must continue while the next ring can improve the match");
+    check(ntd::canStopTemporalSearch(0.9F, 2, parameters),
+        "a farther ring must use its larger distance lower bound");
+    check(!ntd::canStopTemporalSearch(
+            std::numeric_limits<float>::infinity(), 1, parameters),
+        "search must not stop before finding a finite match");
+}
+
 void temporalRejectionStopsGhosts() {
     const ntd::DenoiseParameters parameters;
     const ntd::PixelGuidance reference = makeGuidance();
@@ -118,6 +133,7 @@ int main() {
     parametersAreSafe();
     spatialWeightsRespectGuides();
     matcherSelectsTheBestValidCandidate();
+    temporalSearchUsesAnExactLowerBound();
     temporalRejectionStopsGhosts();
     accumulatorNormalizesMultiplePasses();
 

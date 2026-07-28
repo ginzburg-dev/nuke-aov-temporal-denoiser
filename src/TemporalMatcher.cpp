@@ -34,4 +34,17 @@ MatchResult findBestTemporalMatch(const PixelGuidance& reference,
     return result;
 }
 
+bool canStopTemporalSearch(
+    float bestCost, int nextRing, const DenoiseParameters& parameters) noexcept {
+    if (!std::isfinite(bestCost) || nextRing < 1 || !std::isfinite(parameters.spatialSigma)
+        || parameters.spatialSigma < DenoiseParameters::kMinimumSigma) {
+        return false;
+    }
+
+    const float distance = static_cast<float>(nextRing);
+    const float minimumRemainingCost =
+        distance * distance / (parameters.spatialSigma * parameters.spatialSigma);
+    return bestCost <= minimumRemainingCost;
+}
+
 }  // namespace ntd

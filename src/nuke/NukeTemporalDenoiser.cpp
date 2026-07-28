@@ -352,24 +352,40 @@ LocatedMatch GinzburgTemporalDenoiser::findMatch(Tile& tile, const ntd::PixelGui
     const ntd::Vec2f& predicted, const ntd::DenoiseParameters& params) const {
     LocatedMatch best;
     float bestCost = std::numeric_limits<float>::infinity();
+    const int predictedX = static_cast<int>(std::lround(predicted.x));
+    const int predictedY = static_cast<int>(std::lround(predicted.y));
 
-    for (int dy = -params.searchRadius; dy <= params.searchRadius; ++dy) {
-        for (int dx = -params.searchRadius; dx <= params.searchRadius; ++dx) {
-            const int candidateX = static_cast<int>(std::lround(predicted.x)) + dx;
-            const int candidateY = static_cast<int>(std::lround(predicted.y)) + dy;
-            const ntd::PixelGuidance candidate = readGuidance(tile, candidateX, candidateY);
-            const ntd::MatchCandidate matchCandidate{
-                {static_cast<float>(dx), static_cast<float>(dy)}, candidate};
-            const float cost = ntd::temporalMatchCost(reference, matchCandidate, params);
+    const auto considerCandidate = [&](int dx, int dy) {
+        const int candidateX = predictedX + dx;
+        const int candidateY = predictedY + dy;
+        const ntd::PixelGuidance candidate = readGuidance(tile, candidateX, candidateY);
+        const ntd::MatchCandidate matchCandidate{
+            {static_cast<float>(dx), static_cast<float>(dy)}, candidate};
+        const float cost = ntd::temporalMatchCost(reference, matchCandidate, params);
 
-            if (cost < bestCost) {
-                best.x = candidateX;
-                best.y = candidateY;
-                best.searchDistanceSquared = static_cast<float>(dx * dx + dy * dy);
-                best.guidance = candidate;
-                best.found = true;
-                bestCost = cost;
-            }
+        if (cost < bestCost) {
+            best.x = candidateX;
+            best.y = candidateY;
+            best.searchDistanceSquared = static_cast<float>(dx * dx + dy * dy);
+            best.guidance = candidate;
+            best.found = true;
+            bestCost = cost;
+        }
+    };
+
+    considerCandidate(0, 0);
+    for (int ring = 1; ring <= params.searchRadius; ++ring) {
+        if (best.found && ntd::canStopTemporalSearch(bestCost, ring, params)) {
+            break;
+        }
+
+        for (int dx = -ring; dx <= ring; ++dx) {
+            considerCandidate(dx, -ring);
+            considerCandidate(dx, ring);
+        }
+        for (int dy = -ring + 1; dy < ring; ++dy) {
+            considerCandidate(-ring, dy);
+            considerCandidate(ring, dy);
         }
     }
 

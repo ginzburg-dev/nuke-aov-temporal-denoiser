@@ -25,4 +25,7 @@ struct MatchResult {
 [[nodiscard]] MatchResult findBestTemporalMatch(const PixelGuidance& reference,
     const std::vector<MatchCandidate>& candidates, const DenoiseParameters& parameters) noexcept;
 
+[[nodiscard]] bool canStopTemporalSearch(
+    float bestCost, int nextRing, const DenoiseParameters& parameters) noexcept;
+
 }  // namespace ntd

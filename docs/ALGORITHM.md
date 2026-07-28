@@ -43,9 +43,20 @@ Motion is sampled at each intermediate frame rather than multiplying the
 current vector by the frame offset. Per-frame displacement is clamped by
 `maximumMotionPerFrame`.
 
-The search checks a square window around the predicted coordinate. Beauty,
-albedo, and position thresholds reject invalid candidates before the normalized
-guide cost is compared.
+The search starts at the predicted coordinate and expands in square rings.
+Beauty, albedo, and position thresholds reject invalid candidates before the
+normalized guide cost is evaluated.
+
+The guide cost is non-negative, so every candidate in ring \(k\) has the lower
+bound:
+
+\[
+L_k = \frac{k^2}{\sigma_s^2}
+\]
+
+If the best cost is no greater than \(L_k\), ring \(k\) and all remaining rings
+cannot improve the match and are skipped. This keeps the result exact while
+avoiding most of the search window when motion prediction is accurate.
 
 Past-frame lookup walks against the motion stored on the target frames. The
 sign and units depend on the renderer, so `motion scale` must be checked with a
@@ -69,11 +80,12 @@ temporal radius, and \(m\) the declared per-frame motion limit.
 
 ## Cost
 
-For each output pixel, the current implementation evaluates:
+For each output pixel, the worst case evaluates:
 
 \[
 O((2r_s+1)^2 + 2r_t(2r_q+1)^2)
 \]
 
-The search is exhaustive. SIMD guide evaluation or a hierarchical search would
-be the first places to optimize after profiling on representative frames.
+Center-out traversal and the distance lower bound reduce the typical temporal
+search cost without changing the selected minimum. SIMD guide evaluation would
+be the next optimization to evaluate after profiling representative frames.
