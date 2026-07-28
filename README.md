@@ -1,6 +1,7 @@
 # AOV-Guided Temporal Denoiser for Nuke
 
 [![CI](https://github.com/ginzburg-dev/nuke-aov-temporal-denoiser/actions/workflows/ci.yml/badge.svg)](https://github.com/ginzburg-dev/nuke-aov-temporal-denoiser/actions/workflows/ci.yml)
+[![Release](https://img.shields.io/github/v/release/ginzburg-dev/nuke-aov-temporal-denoiser)](https://github.com/ginzburg-dev/nuke-aov-temporal-denoiser/releases/latest)
 [![License](https://img.shields.io/badge/license-Apache--2.0-blue.svg)](LICENSE)
 
 Experimental C++ denoiser for Monte Carlo renders. The filter combines
