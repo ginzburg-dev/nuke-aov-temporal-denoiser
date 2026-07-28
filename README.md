@@ -124,7 +124,5 @@ publish the tested source revision.
 
 ## License
 
-The source code is Apache-2.0. Visual assets are not covered by the code
-license: the Sprite Fright comparison is credited above and remains available
-under CC BY; the Nuke screenshot is reproduced from the earlier Ginzburg
-Denoiser project for historical context.
+The source code is Apache-2.0. The Sprite Fright comparison is credited above
+and remains available under CC BY.
